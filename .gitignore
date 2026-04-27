@@ -1,9 +1,37 @@
+# ── Build Output ──────────────────────────────────────────────
 target/
 *.jar
+*.war
 *.class
+
+# ── SECRETS — KABHI PUSH MAT KARO ────────────────────────────
+.env
+.env.local
+.env.prod
+application-prod.properties
+*-secret.properties
+secrets/
+
+# ── IDE ───────────────────────────────────────────────────────
 .idea/
 *.iml
+*.ipr
+*.iws
 .vscode/
-.env
+*.eclipse
+.project
+.classpath
+.settings/
+
+# ── Uploaded Photos ───────────────────────────────────────────
 src/main/resources/static/uploads/
+/opt/balaji/uploads/
+
+# ── Logs ──────────────────────────────────────────────────────
 logs/
+*.log
+*.log.*
+
+# ── OS Files ──────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
