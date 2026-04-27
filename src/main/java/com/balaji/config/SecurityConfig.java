@@ -17,6 +17,7 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.*;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 import org.springframework.security.web.header.writers.ReferrerPolicyHeaderWriter;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
@@ -140,7 +141,7 @@ public class SecurityConfig {
 
             // ── Exception Handling ────────────────────────────────────────────
             .exceptionHandling(ex -> ex
-                .authenticationEntryPoint((req, res, e) -> {
+                .authenticationEntryPoint((HttpServletRequest req, HttpServletResponse res, org.springframework.security.core.AuthenticationException e) -> {
                     if (req.getRequestURI().startsWith("/api/")) {
                         res.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
                         res.setContentType("application/json");
@@ -149,7 +150,7 @@ public class SecurityConfig {
                         res.sendRedirect("/login");
                     }
                 })
-                .accessDeniedHandler((req, res, e) -> {
+                .accessDeniedHandler((HttpServletRequest req, HttpServletResponse res, AccessDeniedException e) -> {
                     if (req.getRequestURI().startsWith("/api/")) {
                         res.setStatus(HttpServletResponse.SC_FORBIDDEN);
                         res.setContentType("application/json");
