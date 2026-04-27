@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BALAJI Photo Frames — Agra</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=Cormorant+Garamond:ital,wght@0,300;1,300&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+
+<!-- ═══ NAVBAR ═══ -->
+<header class="navbar">
+  <div class="nav-inner">
+    <div class="brand">
+      <div class="brand-logo">B</div>
+      <div>
+        <div class="brand-name">BALAJI Photo Frames</div>
+        <div class="brand-sub">Agra · Est. Since 2000</div>
+      </div>
+    </div>
+    <nav class="nav-links">
+      <a href="#builder">Build Frame</a>
+      <a href="#pricing">Pricing</a>
+      <a href="#contact">Contact</a>
+      <a href="#builder" class="nav-cta">Order Now</a>
+    </nav>
+  </div>
+</header>
+
+<!-- ═══ HERO ═══ -->
+<section class="hero">
+  <div class="hero-badge">Agra's Finest Frame Studio</div>
+  <h1 class="hero-title">Your Memories.<br><span class="accent">Perfectly Framed.</span></h1>
+  <p class="hero-sub">Premium custom photo frames — handcrafted with finest beading &amp; finishing</p>
+  <div class="hero-actions">
+    <a href="#builder" class="btn-primary">🎨 Build Your Frame</a>
+    <a href="https://wa.me/918299576949" class="btn-outline-white" target="_blank">💬 WhatsApp Us</a>
+  </div>
+</section>
+
+<!-- ═══ FRAME BUILDER ═══ -->
+<section class="section" id="builder">
+  <div class="container">
+    <div class="sec-label">Interactive Builder</div>
+    <h2 class="sec-title">Design Your Perfect Frame</h2>
+    <p class="sec-desc">Select size, beading &amp; finish — see live preview &amp; price instantly.</p>
+
+    <div class="builder-layout">
+
+      <!-- ── LEFT: Steps ── -->
+      <div>
+
+        <!-- Step 1: Upload Photo -->
+        <div class="step-card">
+          <div class="step-num">1</div>
+          <div class="step-title">Upload Your Photo</div>
+          <div class="upload-zone" id="uploadZone">
+            <div class="upload-icon">🖼️</div>
+            <div class="upload-text"><strong>Click to upload</strong> or drag &amp; drop<br>JPG, PNG · Max 10MB</div>
+            <img id="photoPreview" src="" alt="preview">
+            <div class="upload-change-hint">Click to change</div>
+          </div>
+          <input type="file" id="fileInput" accept="image/*" style="display:none">
+        </div>
+
+        <!-- Step 2: Frame Size -->
+        <div class="step-card">
+          <div class="step-num">2</div>
+          <div class="step-title">Select Frame Size (inches)</div>
+          <div class="size-grid">
+            <button class="size-btn"
+                    th:each="s : ${sizes}"
+                    th:onclick="|selectSize(this, ${s.id})|"
+                    th:data-w="${s.widthInch}"
+                    th:data-h="${s.heightInch}">
+              <span class="size-label" th:text="${s.displayLabel}">4 × 6</span>
+              <span class="size-price" th:text="'₹' + ${s.basePrice}">₹80</span>
+              <span class="size-pop"   th:text="${s.popularFor}">Wallet</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Step 3: Beading -->
+        <div class="step-card">
+          <div class="step-num">3</div>
+          <div class="step-title">Beading Width &amp; Design</div>
+          <div class="beading-grid">
+            <div class="bead-card"
+                 th:each="b : ${beadings}"
+                 th:onclick="|selectBeading(this, ${b.id}, ${b.borderPx}, '${b.gradientCss}')|"
+                 th:data-border-px="${b.borderPx}"
+                 th:data-gradient="${b.gradientCss}">
+              <div class="bead-preview" th:style="'background:' + ${b.gradientCss}"></div>
+              <div class="bead-width"  th:text="${b.displayWidth}">1"</div>
+              <div class="bead-add"    th:text="'+₹' + ${b.additionalPrice}">+₹60</div>
+              <div class="bead-desc"   th:text="${b.description}">Classic</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Step 4: Cover / Lamination -->
+        <div class="step-card">
+          <div class="step-num">4</div>
+          <div class="step-title">Photo Cover / Finish</div>
+          <div class="cover-grid">
+            <div class="cover-card"
+                 th:each="c : ${covers}"
+                 th:onclick="|selectCover(this, ${c.id}, '${c.coverType}')|">
+              <div class="cover-emoji" th:text="${c.emoji}">🌫️</div>
+              <div class="cover-name"  th:text="${c.displayName}">Matte</div>
+              <div class="cover-add"   th:text="'+₹' + ${c.additionalPrice}">+₹80</div>
+              <div class="cover-desc"  th:text="${c.description}">Soft finish</div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- ── RIGHT: Preview Panel ── -->
+      <div class="preview-panel">
+        <div class="preview-title">🖼 Live Frame Preview</div>
+
+        <!-- Frame Canvas -->
+        <div class="frame-canvas" id="frameCanvas">
+          <div id="frameOuter" style="position:relative;transition:all 0.4s ease">
+            <div id="frameBeading" class="frame-beading-layer"></div>
+            <div id="framePhotoArea" class="frame-photo-area" style="position:absolute">
+              <img id="framePhotoImg" class="frame-photo-img" src="" alt="">
+              <div class="frame-placeholder-text" id="framePlaceholder">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                        d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                </svg>
+                Upload photo to preview
+              </div>
+              <div class="glass-shimmer" id="glassShimmer"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Price Breakdown -->
+        <div class="price-box">
+          <div class="price-row">
+            <span>Frame Size</span>
+            <span class="price-val" id="prSize">— Select size</span>
+          </div>
+          <div class="price-row">
+            <span>Beading</span>
+            <span class="price-val" id="prBeading">—</span>
+          </div>
+          <div class="price-row">
+            <span>Cover / Finish</span>
+            <span class="price-val" id="prCover">—</span>
+          </div>
+          <div class="price-row total-row">
+            <span>Total</span>
+            <span id="prTotal">₹ —</span>
+          </div>
+        </div>
+
+        <button class="checkout-btn" onclick="openPayment()">💳 Pay Now →</button>
+        <p class="secure-note">🔒 Secure · UPI · Card · Cash on Delivery</p>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ═══ PRICING TABLE ═══ -->
+<section class="section section-white" id="pricing">
+  <div class="container">
+    <div class="sec-label">Reference</div>
+    <h2 class="sec-title">All Sizes &amp; Base Prices</h2>
+    <p class="sec-desc">Base frame price. Beading &amp; cover charges are added on top.</p>
+
+    <div class="sizes-table-wrap">
+      <table class="sizes-table">
+        <thead>
+          <tr>
+            <th>Size (inches)</th>
+            <th>Width × Height</th>
+            <th>Base Price</th>
+            <th>Popular For</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr th:each="s : ${sizes}">
+            <td><strong th:text="${s.displayLabel}">4 × 6</strong></td>
+            <td th:text="${s.widthInch} + ' × ' + ${s.heightInch} + ' in'">4 × 6 in</td>
+            <td><strong style="color:var(--gold-dark)" th:text="'₹' + ${s.basePrice}">₹80</strong></td>
+            <td><span class="badge-pop" th:text="${s.popularFor}">Wallet</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Beading & Cover pricing -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-top:40px">
+
+      <!-- Beading Pricing -->
+      <div style="background:var(--off-white);border-radius:var(--radius-lg);overflow:hidden;border:1px solid rgba(201,168,76,0.2)">
+        <div style="background:var(--brown);padding:16px 20px">
+          <h3 style="color:var(--gold);font-family:'Playfair Display',serif;font-weight:700">Beading Charges</h3>
+        </div>
+        <table style="width:100%;border-collapse:collapse;font-size:14px">
+          <tr th:each="b : ${beadings}" style="border-bottom:1px solid rgba(201,168,76,0.12)">
+            <td style="padding:12px 20px">
+              <span style="display:inline-block;width:24px;height:24px;border-radius:4px;margin-right:8px;vertical-align:middle"
+                    th:style="'display:inline-block;width:24px;height:24px;border-radius:4px;margin-right:8px;vertical-align:middle;background:' + ${b.gradientCss}"></span>
+              <span th:text="${b.widthLabel}">1 inch</span>
+            </td>
+            <td style="padding:12px 20px;font-size:11px;color:var(--brown-light)" th:text="${b.description}">Classic</td>
+            <td style="padding:12px 20px;font-weight:700;color:var(--gold-dark);text-align:right" th:text="'+ ₹' + ${b.additionalPrice}">+₹60</td>
+          </tr>
+        </table>
+      </div>
+
+      <!-- Cover Pricing -->
+      <div style="background:var(--off-white);border-radius:var(--radius-lg);overflow:hidden;border:1px solid rgba(201,168,76,0.2)">
+        <div style="background:var(--brown);padding:16px 20px">
+          <h3 style="color:var(--gold);font-family:'Playfair Display',serif;font-weight:700">Cover / Finish Charges</h3>
+        </div>
+        <table style="width:100%;border-collapse:collapse;font-size:14px">
+          <tr th:each="c : ${covers}" style="border-bottom:1px solid rgba(201,168,76,0.12)">
+            <td style="padding:12px 20px">
+              <span th:text="${c.emoji}">🌫️</span>
+              <span style="margin-left:8px" th:text="${c.displayName}">Matte</span>
+            </td>
+            <td style="padding:12px 20px;font-size:11px;color:var(--brown-light)" th:text="${c.description}">Soft finish</td>
+            <td style="padding:12px 20px;font-weight:700;color:var(--gold-dark);text-align:right" th:text="'+ ₹' + ${c.additionalPrice}">+₹80</td>
+          </tr>
+        </table>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ CONTACT ═══ -->
+<section class="section section-dark" id="contact">
+  <div class="container">
+    <div class="contact-grid">
+      <div>
+        <div class="sec-label">Visit Us</div>
+        <h2 class="contact-title">BALAJI<br>Photo Frames</h2>
+
+        <div class="contact-item">
+          <div class="contact-icon-box">📍</div>
+          <div>
+            <div class="contact-label">Address</div>
+            <div class="contact-value">Rajpur, Shamshabad Road<br>Agra — 282001, Uttar Pradesh</div>
+          </div>
+        </div>
+
+        <div class="contact-item">
+          <div class="contact-icon-box">📞</div>
+          <div>
+            <div class="contact-label">Phone / Enquiry</div>
+            <div class="contact-value">
+              <a th:href="'tel:+91' + ${businessPhone}" th:text="'+91 ' + ${businessPhone}">+91 82995 76949</a>
+            </div>
+          </div>
+        </div>
+
+        <div class="contact-item">
+          <div class="contact-icon-box">💬</div>
+          <div>
+            <div class="contact-label">WhatsApp</div>
+            <div class="contact-value">+91 82995 76949</div>
+          </div>
+        </div>
+
+        <div class="contact-cta-row">
+          <a href="https://wa.me/918299576949?text=Hello%20BALAJI%20Photo%20Frames!%20I%20want%20to%20enquire%20about%20a%20frame."
+             class="whatsapp-btn" target="_blank">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
+            </svg>
+            Chat on WhatsApp
+          </a>
+          <a href="tel:+918299576949"
+             style="display:inline-flex;align-items:center;gap:8px;background:rgba(201,168,76,0.15);color:var(--gold);padding:13px 24px;border-radius:10px;font-weight:600;font-size:14px;border:1px solid rgba(201,168,76,0.3)">
+            📞 Call Now
+          </a>
+        </div>
+      </div>
+
+      <!-- Store Info Card -->
+      <div class="store-card">
+        <div class="map-placeholder">
+          <div style="font-size:40px">🗺️</div>
+          <div>Rajpur, Shamshabad Road, Agra</div>
+          <a href="https://maps.google.com/?q=Rajpur+Shamshabad+Road+Agra+282001"
+             target="_blank"
+             style="color:var(--gold-light);font-size:13px">Open in Google Maps →</a>
+        </div>
+        <div class="hours-title">Business Hours</div>
+        <div class="hour-row">
+          <span>Monday – Saturday</span>
+          <span class="hour-open">9:00 AM – 8:00 PM</span>
+        </div>
+        <div class="hour-row">
+          <span>Sunday</span>
+          <span class="hour-open">10:00 AM – 6:00 PM</span>
+        </div>
+        <div class="hour-row" style="border-bottom:none">
+          <span>Public Holidays</span>
+          <span style="color:rgba(255,255,255,0.4)">Call to Confirm</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ FOOTER ═══ -->
+<footer class="footer">
+  <p>
+    © 2024 <span class="gold">BALAJI Photo Frames</span> ·
+    Rajpur, Shamshabad Road, Agra 282001 ·
+    <span class="gold">+91 82995 76949</span>
+  </p>
+  <p style="margin-top:6px">Built with ❤️ · Spring Boot · Java 17</p>
+</footer>
+
+<!-- ═══ PAYMENT MODAL ═══ -->
+<div class="modal-backdrop" id="modalBackdrop">
+  <div class="modal">
+
+    <!-- Modal Header -->
+    <div class="modal-head">
+      <div class="modal-head-text">
+        <div class="modal-title">Complete Your Order</div>
+        <div class="modal-subtitle">BALAJI Photo Frames — Agra</div>
+      </div>
+      <button class="modal-close-btn" onclick="closePayment()">✕</button>
+    </div>
+
+    <div class="modal-body">
+
+      <!-- ── Form Step ── -->
+      <div id="payFormStep">
+
+        <!-- Customer Info -->
+        <div class="form-group">
+          <label class="form-label">Full Name *</label>
+          <input class="form-input" type="text" id="cName" placeholder="Enter your full name">
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Phone Number *</label>
+            <input class="form-input" type="tel" id="cPhone" placeholder="+91 XXXXXXXXXX">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Email (optional)</label>
+            <input class="form-input" type="email" id="cEmail" placeholder="your@email.com">
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Delivery Address (or write "Store Pickup")</label>
+          <input class="form-input" type="text" id="cAddress" placeholder="Your address or Store Pickup">
+        </div>
+
+        <!-- Payment Method -->
+        <div class="form-label" style="margin-top:20px;margin-bottom:10px">Payment Method</div>
+        <div class="pay-tabs">
+          <button class="pay-tab active" data-tab="upi">📱 UPI</button>
+          <button class="pay-tab" data-tab="card">💳 Card</button>
+          <button class="pay-tab" data-tab="cash">💵 Cash/COD</button>
+        </div>
+
+        <!-- UPI Pane -->
+        <div class="pay-pane active" id="pane-upi">
+          <div class="upi-box">
+            <div class="upi-qr-wrap">QR Code<br><small>Scan with any UPI app</small></div>
+            <div class="upi-id-box" th:text="${businessUpi}">8765673141@apl</div>
+            <div class="upi-note">PhonePe · GPay · Paytm · Any UPI app</div>
+          </div>
+        </div>
+
+        <!-- Card Pane -->
+        <div class="pay-pane" id="pane-card">
+          <div class="form-group">
+            <label class="form-label">Card Number</label>
+            <input class="form-input" type="text" placeholder="1234 5678 9012 3456"
+                   maxlength="19" oninput="formatCard(this)">
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Expiry (MM/YY)</label>
+              <input class="form-input" type="text" placeholder="MM/YY" maxlength="5">
+            </div>
+            <div class="form-group">
+              <label class="form-label">CVV</label>
+              <input class="form-input" type="password" placeholder="•••" maxlength="4">
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Name on Card</label>
+            <input class="form-input" type="text" placeholder="As printed on card">
+          </div>
+        </div>
+
+        <!-- Cash/COD Pane -->
+        <div class="pay-pane" id="pane-cash">
+          <div class="cod-box">
+            <div style="font-size:40px;margin-bottom:12px">💵</div>
+            <div style="font-weight:700;font-size:15px;color:var(--brown);margin-bottom:8px">Pay at Store / On Delivery</div>
+            <div style="font-size:13px;color:var(--brown-light)">Pay cash when you collect your frame from our Agra store, or upon home delivery.</div>
+          </div>
+        </div>
+
+        <!-- Razorpay Pay Button (shows for UPI + Card) -->
+        <button class="pay-action-btn rzp-btn" id="rzpPayBtn"
+                onclick="initiateRazorpayPayment()"
+                style="background:var(--gold);color:var(--brown)">
+          💳 Pay Now — <span id="payTotalBtn">₹0</span>
+        </button>
+        <!-- COD Confirm Button (shows only for Cash tab) -->
+        <button class="pay-action-btn" id="codConfirmBtn"
+                onclick="submitOrder()"
+                style="display:none">
+          ✓ Confirm COD Order — <span id="codTotalBtn">₹0</span>
+        </button>
+      </div>
+
+      <!-- ── Success Step ── -->
+      <div class="success-wrap" id="successStep">
+        <div class="success-icon">🎉</div>
+        <div class="success-title">Order Placed!</div>
+        <div class="success-sub">
+          Thank you <strong id="successName">—</strong>!<br>
+          Order <strong id="successOrderId">—</strong> for <strong id="successTotal">—</strong> is confirmed.<br>
+          We'll contact you on <strong id="successPhone">—</strong> with delivery details.
+        </div>
+        <a id="waLink" href="#" class="whatsapp-btn" target="_blank">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
+          </svg>
+          Confirm on WhatsApp
+        </a>
+        <br>
+        <button onclick="closePayment()"
+                style="margin-top:14px;background:none;border:none;color:var(--brown-light);font-size:13px;cursor:pointer">
+          Close
+        </button>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- ═══ TOAST ═══ -->
+<div class="toast" id="toast"></div>
+
+<!-- Scripts -->
+<!-- Razorpay Checkout SDK -->
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+<!-- App JS -->
+<script th:src="@{/js/app.js}"></script>
+<!-- Payment JS -->
+<script th:src="@{/js/payment.js}"></script>
+</body>
+</html>

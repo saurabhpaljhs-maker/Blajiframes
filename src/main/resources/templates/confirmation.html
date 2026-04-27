@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Order Confirmed — BALAJI Photo Frames</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" th:href="@{/css/style.css}">
+<style>
+.confirm-page{max-width:580px;margin:60px auto;padding:0 24px}
+.confirm-card{background:#fff;border-radius:20px;border:1px solid rgba(201,168,76,0.2);overflow:hidden;box-shadow:0 8px 48px rgba(44,24,16,0.10)}
+.confirm-head{background:var(--brown);padding:36px;text-align:center}
+.confirm-icon{font-size:56px;margin-bottom:12px}
+.confirm-title{font-family:'Playfair Display',serif;font-size:2rem;font-weight:900;color:var(--gold)}
+.confirm-sub{color:rgba(255,255,255,0.55);font-size:14px;margin-top:6px}
+.confirm-body{padding:32px}
+.detail-row{display:flex;justify-content:space-between;padding:12px 0;border-bottom:1px solid rgba(201,168,76,0.1);font-size:14px}
+.detail-row:last-child{border-bottom:none}
+.detail-label{color:var(--brown-light)}
+.detail-value{font-weight:600;color:var(--brown);text-align:right}
+.total-row{font-size:1.2rem;font-family:'Playfair Display',serif;font-weight:700;padding-top:16px}
+.actions{display:flex;gap:12px;margin-top:28px;flex-wrap:wrap}
+</style>
+</head>
+<body style="background:var(--cream)">
+
+<header class="navbar">
+  <div class="nav-inner">
+    <div class="brand">
+      <div class="brand-logo">B</div>
+      <div>
+        <div class="brand-name">BALAJI Photo Frames</div>
+        <div class="brand-sub">Agra · Est. Since 2000</div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<div class="confirm-page">
+  <div class="confirm-card">
+    <div class="confirm-head">
+      <div class="confirm-icon">🎉</div>
+      <div class="confirm-title">Order Confirmed!</div>
+      <div class="confirm-sub">Thank you for choosing BALAJI Photo Frames</div>
+    </div>
+    <div class="confirm-body">
+      <div class="detail-row">
+        <span class="detail-label">Order ID</span>
+        <span class="detail-value" th:text="'#' + ${order.id}">#1</span>
+      </div>
+      <div class="detail-row">
+        <span class="detail-label">Customer</span>
+        <span class="detail-value" th:text="${order.customerName}">Name</span>
+      </div>
+      <div class="detail-row">
+        <span class="detail-label">Phone</span>
+        <span class="detail-value" th:text="${order.customerPhone}">Phone</span>
+      </div>
+      <div class="detail-row">
+        <span class="detail-label">Frame Size</span>
+        <span class="detail-value" th:text="${order.frameSize.displayLabel} + '&quot;'">—</span>
+      </div>
+      <div class="detail-row">
+        <span class="detail-label">Beading</span>
+        <span class="detail-value" th:text="${order.beadingOption.widthLabel}">—</span>
+      </div>
+      <div class="detail-row">
+        <span class="detail-label">Cover / Finish</span>
+        <span class="detail-value" th:text="${order.coverOption.displayName}">—</span>
+      </div>
+      <div class="detail-row">
+        <span class="detail-label">Payment</span>
+        <span class="detail-value" th:text="${order.paymentMethod}">UPI</span>
+      </div>
+      <div class="detail-row">
+        <span class="detail-label">Status</span>
+        <span class="detail-value" style="color:var(--gold)" th:text="${order.status}">PENDING</span>
+      </div>
+      <div class="detail-row total-row">
+        <span>Total Amount</span>
+        <span style="color:var(--gold-dark)" th:text="'₹ ' + ${order.totalPrice}">₹0</span>
+      </div>
+      <div class="actions">
+        <a th:href="'https://wa.me/918299576949?text=Hello+BALAJI+Frames!+My+Order+%23' + ${order.id} + '+is+placed.'"
+           class="whatsapp-btn" target="_blank">
+          💬 WhatsApp Us
+        </a>
+        <a href="/" class="btn-primary" style="display:inline-block">← Build Another Frame</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

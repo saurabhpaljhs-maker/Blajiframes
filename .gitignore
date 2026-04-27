@@ -1,0 +1,9 @@
+target/
+*.jar
+*.class
+.idea/
+*.iml
+.vscode/
+.env
+src/main/resources/static/uploads/
+logs/
