@@ -17,12 +17,9 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.*;
-import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 import org.springframework.security.web.header.writers.ReferrerPolicyHeaderWriter;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
-
-import java.io.IOException;
 
 @Configuration
 @EnableWebSecurity
@@ -31,18 +28,16 @@ import java.io.IOException;
 public class SecurityConfig {
 
     private final CustomUserDetailsService userDetailsService;
-    private final LoginAttemptService      loginAttemptService;
+    private final LoginAttemptService loginAttemptService;
 
     @Value("${app.admin.username:balaji_admin}")
     private String adminUsername;
 
-    // ── BCrypt Password Encoder ───────────────────────────────────────────────
     @Bean
     public BCryptPasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder(12); // strength 12 — secure
+        return new BCryptPasswordEncoder(12);
     }
 
-    // ── Auth Provider ─────────────────────────────────────────────────────────
     @Bean
     public DaoAuthenticationProvider authProvider() {
         DaoAuthenticationProvider provider = new DaoAuthenticationProvider();
@@ -51,49 +46,34 @@ public class SecurityConfig {
         return provider;
     }
 
-    // ── Auth Manager ──────────────────────────────────────────────────────────
     @Bean
-    public AuthenticationManager authenticationManager(
-            AuthenticationConfiguration config) throws Exception {
+    public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
         return config.getAuthenticationManager();
     }
 
-    // ── Main Security Filter Chain ────────────────────────────────────────────
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+
         http
-            // ── URL Authorization ─────────────────────────────────────────────
             .authorizeHttpRequests(auth -> auth
-                // Public — customer-facing pages
                 .requestMatchers(
-                    "/",
-                    "/css/**", "/js/**", "/images/**", "/uploads/**",
-                    "/api/frame/**",
-                    "/api/payment/**",
-                    "/api/order/place",
-                    "/order/confirmation/**",
-                    "/h2-console/**",
-                    "/login", "/login/**",
-                    "/error"
+                    "/", "/css/**", "/js/**", "/images/**", "/uploads/**",
+                    "/api/frame/**", "/api/payment/**", "/api/order/place",
+                    "/order/confirmation/**", "/h2-console/**",
+                    "/login", "/login/**", "/error"
                 ).permitAll()
-                // Admin — requires ROLE_ADMIN
                 .requestMatchers("/admin/**").hasRole("ADMIN")
-                // Anything else — must be authenticated
                 .anyRequest().authenticated()
             )
 
-            // ── Form Login ────────────────────────────────────────────────────
             .formLogin(form -> form
                 .loginPage("/login")
                 .loginProcessingUrl("/login")
-                .usernameParameter("username")
-                .passwordParameter("password")
                 .successHandler(loginSuccessHandler())
                 .failureHandler(loginFailureHandler())
                 .permitAll()
             )
 
-            // ── Logout ────────────────────────────────────────────────────────
             .logout(logout -> logout
                 .logoutRequestMatcher(new AntPathRequestMatcher("/admin/logout", "POST"))
                 .logoutSuccessUrl("/login?logout=true")
@@ -103,26 +83,19 @@ public class SecurityConfig {
                 .permitAll()
             )
 
-            // ── Session Management ─────────────────────────────────────────────
             .sessionManagement(session -> session
-                .maximumSessions(1)                 // 1 session per admin at a time
-                .maxSessionsPreventsLogin(false)    // new login kicks old session
+                .maximumSessions(1)
+                .maxSessionsPreventsLogin(false)
             )
 
-            // ── CSRF ──────────────────────────────────────────────────────────
-            // Cookie-based CSRF — works well with Thymeleaf + REST
             .csrf(csrf -> csrf
                 .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
-                .ignoringRequestMatchers(
-                    "/api/**",          // REST APIs — use Razorpay sig instead
-                    "/h2-console/**"    // Dev only
-                )
+                .ignoringRequestMatchers("/api/**", "/h2-console/**")
             )
 
-            // ── Security Headers ──────────────────────────────────────────────
             .headers(headers -> headers
-                .frameOptions(fo -> fo.sameOrigin())           // H2 console support
-                .xssProtection(xss -> xss.disable())           // modern browsers handle XSS
+                .frameOptions(fo -> fo.sameOrigin())
+                .xssProtection(xss -> xss.disable())
                 .contentSecurityPolicy(csp -> csp
                     .policyDirectives(
                         "default-src 'self'; " +
@@ -139,24 +112,24 @@ public class SecurityConfig {
                 )
             )
 
-            // ── Exception Handling ────────────────────────────────────────────
+            // ✅ FIXED EXCEPTION HANDLING
             .exceptionHandling(ex -> ex
-                .authenticationEntryPoint((HttpServletRequest req, HttpServletResponse res, org.springframework.security.core.AuthenticationException e) -> {
-                    if (req.getRequestURI().startsWith("/api/")) {
-                        res.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-                        res.setContentType("application/json");
-                        res.getWriter().write("{\"error\":\"Unauthorized\",\"message\":\"Login required\"}");
+                .authenticationEntryPoint((request, response, authException) -> {
+                    if (request.getRequestURI().startsWith("/api/")) {
+                        response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                        response.setContentType("application/json");
+                        response.getWriter().write("{\"error\":\"Unauthorized\",\"message\":\"Login required\"}");
                     } else {
-                        res.sendRedirect("/login");
+                        response.sendRedirect("/login");
                     }
                 })
-                .accessDeniedHandler((HttpServletRequest req, HttpServletResponse res, AccessDeniedException e) -> {
-                    if (req.getRequestURI().startsWith("/api/")) {
-                        res.setStatus(HttpServletResponse.SC_FORBIDDEN);
-                        res.setContentType("application/json");
-                        res.getWriter().write("{\"error\":\"Forbidden\",\"message\":\"Access denied\"}");
+                .accessDeniedHandler((request, response, accessDeniedException) -> {
+                    if (request.getRequestURI().startsWith("/api/")) {
+                        response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+                        response.setContentType("application/json");
+                        response.getWriter().write("{\"error\":\"Forbidden\",\"message\":\"Access denied\"}");
                     } else {
-                        res.sendRedirect("/login?denied=true");
+                        response.sendRedirect("/login?denied=true");
                     }
                 })
             );
@@ -164,35 +137,32 @@ public class SecurityConfig {
         return http.build();
     }
 
-    // ── Success Handler: check brute force, then redirect ─────────────────────
     @Bean
     public AuthenticationSuccessHandler loginSuccessHandler() {
-        return (HttpServletRequest req, HttpServletResponse res,
-                org.springframework.security.core.Authentication auth) -> {
-            String ip = getClientIP(req);
+        return (request, response, authentication) -> {
+            String ip = getClientIP(request);
             loginAttemptService.loginSucceeded(ip);
-            res.sendRedirect("/admin/orders");
+            response.sendRedirect("/admin/orders");
         };
     }
 
-    // ── Failure Handler: track failed attempts, block if needed ───────────────
     @Bean
     public AuthenticationFailureHandler loginFailureHandler() {
-        return (HttpServletRequest req, HttpServletResponse res, Exception ex) -> {
-            String ip = getClientIP(req);
+        return (request, response, exception) -> {
+            String ip = getClientIP(request);
 
             if (loginAttemptService.isBlocked(ip)) {
                 long mins = loginAttemptService.minutesRemaining(ip);
-                res.sendRedirect("/login?blocked=true&minutes=" + mins);
+                response.sendRedirect("/login?blocked=true&minutes=" + mins);
             } else {
                 loginAttemptService.loginFailed(ip);
-                res.sendRedirect("/login?error=true");
+                response.sendRedirect("/login?error=true");
             }
         };
     }
 
-    private String getClientIP(HttpServletRequest req) {
-        String forwarded = req.getHeader("X-Forwarded-For");
-        return (forwarded != null) ? forwarded.split(",")[0].trim() : req.getRemoteAddr();
+    private String getClientIP(HttpServletRequest request) {
+        String forwarded = request.getHeader("X-Forwarded-For");
+        return (forwarded != null) ? forwarded.split(",")[0].trim() : request.getRemoteAddr();
     }
 }
