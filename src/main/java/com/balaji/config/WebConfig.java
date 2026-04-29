@@ -1,29 +1,26 @@
 package com.balaji.config;
 
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.web.servlet.config.annotation.*;
+import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
+import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 @Configuration
 public class WebConfig implements WebMvcConfigurer {
 
-    // Loaded from env var UPLOAD_DIR
-    // Dev:  /tmp/balaji-dev-uploads
-    // Prod: /opt/balaji/uploads
-    @Value("${app.upload.dir:/tmp/balaji-uploads}")
-    private String uploadDir;
-
     @Override
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
+        // CSS, JS, Images - classpath se serve karo
+        registry.addResourceHandler("/css/**")
+                .addResourceLocations("classpath:/static/css/");
 
-        // Serve uploaded photos at /uploads/**
-        // Points to external folder — works after JAR build too
+        registry.addResourceHandler("/js/**")
+                .addResourceLocations("classpath:/static/js/");
+
+        registry.addResourceHandler("/images/**")
+                .addResourceLocations("classpath:/static/images/");
+
+        // Uploaded photos - external folder se
         registry.addResourceHandler("/uploads/**")
-                .addResourceLocations("file:" + uploadDir + "/")
-                .setCachePeriod(3600); // cache 1 hour
-
-        // Standard classpath static resources
-        registry.addResourceHandler("/css/**", "/js/**", "/images/**")
-                .addResourceLocations("classpath:/static/");
+                .addResourceLocations("file:uploads/");
     }
 }
